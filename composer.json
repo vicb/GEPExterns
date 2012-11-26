@@ -1,0 +1,23 @@
+{
+    "name": "gepexterns/gepexterns",
+    "description": "Generate Google Earth plugin externs file for use with Google Closure",
+    "keywords": ["google closure", "google earth plugin", "externs"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Victor Berchet",
+            "email": "victor@suumit.com"
+        }
+    ],
+    "autoload": {
+        "psr-0": { "GEPExterns\\": "src/" }
+    },
+    "require": {
+        "php": ">=5.3.0",
+        "fabpot/goutte": "1.0.x-dev",
+        "symfony/dom-crawler": "v2.1.3",
+        "symfony/css-selector": "v2.1.3",
+        "twig/twig": "v1.11.1"
+    }
+}

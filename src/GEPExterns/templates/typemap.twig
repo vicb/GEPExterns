@@ -1,0 +1,7 @@
+{% for prop in properties %}
+
+/**
+ * @type {{ '{' ~ prop.getType ~ '}' }}
+ */
+{{ class }}.prototype.{{ prop.name }};
+{% endfor %}

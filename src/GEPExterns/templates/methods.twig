@@ -1,0 +1,12 @@
+{% import 'externs.twig' as externs %}
+{% for method in class.methods %}
+
+/**
+{% for arg in method.arguments %}
+ * @param {% include 'type.twig' with {type: arg.type} %} {{ arg.name }}
+{% endfor %}
+ * @return {% include 'type.twig' with {type: method.returnType} %}
+
+ */
+{{ class.name }}.prototype.{{ method.name }} = function({% for arg in method.arguments %}{{ '%s%s'|format(arg.name, loop.last ? '' :', ') }}{% endfor %});
+{% endfor %}

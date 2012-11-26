@@ -1,0 +1,60 @@
+google.earth = {};
+
+/**
+ * @return {boolean}
+ */
+google.earth.isSupported = function() {};
+
+/**
+ * @return {boolean}
+ */
+google.earth.isInstalled = function() {};
+
+/**
+ * @param {Node} domNode
+ * @param {function(GEPlugin)} initCallback
+ * @param {function(string)} failureCallback
+ * @param {Object.<string, *>=} opt_options
+ * @return {undefined}
+ */
+google.earth.createInstance = function(domNode, initCallback, failure, opt_options) {};
+
+/**
+ * @param {Object} targetObject
+ * @param {string} eventID
+ * @param {function(KmlEvent)} listenerCallback
+ * @param {boolean=} opt_useCapture
+ * @return {undefined}
+ */
+google.earth.addEventListener = function(targetObject, eventID, listenerCallback, opt_useCapture) {};
+
+/**
+ * @param {Object} targetObject
+ * @param {string} eventID
+ * @param {function(KmlEvent)} listenerCallback
+ * @param {boolean=} opt_useCapture
+ * @return {undefined}
+ */
+google.earth.removeEventListener = function(targetObject, eventID, listenerCallback, opt_useCapture) {};
+
+/**
+ * @param {GEPlugin} pluginInstance
+ * @param {string} url
+ * @param {Function} completionCallback
+ * @return {undefined}
+ */
+google.earth.fetchKml = function(pluginInstance, url, completionCallback) {};
+
+/**
+ * @param {GEPlugin} pluginInstance
+ * @param {Function} batchFunction
+ * @return {undefined}
+ */
+google.earth.executeBatch = function(pluginInstance, batchFunction) {};
+
+/**
+ * @param {string} languageCode
+ * @param {Function} batchFunction
+ * @return {undefined}
+ */
+google.earth.setLanguage = function(langageCode) {};
