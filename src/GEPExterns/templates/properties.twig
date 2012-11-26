@@ -1,6 +1,4 @@
-{% import 'externs.twig' as externs %}
 {% for prop in class.properties %}
-
 /**
  * @type {% include 'type.twig' with {type: prop.type} %}
  */

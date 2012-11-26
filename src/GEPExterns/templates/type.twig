@@ -1,1 +1,1 @@
-{{ '{' }}{% if parents[type] is defined %}{{ type }}{% elseif typeMap[type] %}{{ typeMap[type] }}{% else %}? ({{ type }}){% endif %}{{ '}' }}
+{{ '{' }}{% if typeMap[type] %}{{ typeMap[type] }}{% else %}type{% endif %}{{ '}' }}

@@ -20,6 +20,11 @@ class JsClass
     private $properties = array();
 
     /**
+     * @var array
+     */
+    private $enums = array();
+
+    /**
      * @var JsClass[]
      */
     private $parents = array();
@@ -70,6 +75,14 @@ class JsClass
     }
 
     /**
+     * @return array
+     */
+    public function getEnums()
+    {
+        return $this->enums;
+    }
+
+    /**
      * @param $method Method|Method[] The method to add
      */
     public function addMethod($method)
@@ -80,12 +93,16 @@ class JsClass
     }
 
     /**
- * @param $property Variable|Variable[] The property to add
+ * @param $property Variable The property to add
  */
-    public function addProperty($property)
+    public function addProperty(Variable $property)
     {
-        foreach(is_array($property) ? $property : array($property) as $p) {
-            $this->properties[] = $p;
+        if ('Enum' === substr($property->getType(), 5)) {
+            if (array_key_exists($property->getType(), $this->enums)) {
+                $this->enums[$property->getType()][] = $property->getName();
+            } else {
+                $this->enums[$property->getType()] = array($property->getName());
+            }
         }
     }
 

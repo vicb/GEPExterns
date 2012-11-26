@@ -68,6 +68,7 @@ class Parser
                 'bool'   => 'boolean',
                 'int'    => 'number',
                 'double' => 'number',
+                'float'  => 'number',
                 'void'   => 'undefined',
                 'string' => 'string'
             )

@@ -1,0 +1,9 @@
+{% for name, values in class.enums %}
+/**
+ * @enum {number|string}
+ */
+{{ name }} = {
+{% foreach value in values %}
+    {{ value }}: ''{{ loop.isLast ? '' : ',' }}
+{% endfor %}
+};
