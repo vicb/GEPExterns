@@ -50,9 +50,12 @@ class Tree
      */
     private function fixAbstractParents()
     {
+        // class => parent
         $parents = array(
             'KmlMultiGeometry'    => 'KmlGeometry',
             'KmlAltitudeGeometry' => 'KmlGeometry',
+            'KmlStyle'            => 'KmlStyleSelector',
+            'KmlStyleMap'         => 'KmlStyleSelector',
         );
 
         foreach ($parents as $class => $parent) {

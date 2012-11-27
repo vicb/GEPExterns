@@ -65,11 +65,6 @@ class Parser
             if (!is_dir($this->htmlCacheFolder)) {
                 mkdir($this->htmlCacheFolder, 0777, true);
             }
-
-            if (!is_dir($this->jsClassCache)) {
-                mkdir($this->jsClassCache, 0777, true);
-            }
-
         }
     }
 
@@ -78,8 +73,8 @@ class Parser
      */
     public function parse()
     {
-        if (is_file($this->jsClassCache) && filemtime($this->jsClassCache) < (time() - 3600)) {
-            return unserialize($this->jsClassCache);
+        if (is_file($this->jsClassCache) && filemtime($this->jsClassCache) > (time() - 3600)) {
+            return unserialize(file_get_contents($this->jsClassCache));
         }
 
         $this->addClasses();
@@ -88,7 +83,7 @@ class Parser
             $this->addProperties($jsClass);
             $this->addParents($jsClass);
         }
-        sort($this->jsClasses);
+        asort($this->jsClasses);
 
         $tree = new Tree($this->jsClasses);
 
@@ -230,7 +225,7 @@ class Parser
         $cache = null === $this->htmlCacheFolder ? null : $this->htmlCacheFolder . '/' . $key . '.html';
 
         if (!isset($this->crawlerCache[$key])) {
-            if ($cache && file_exists($cache) && filemtime($cache) < (time() -  5 * 3600)) {
+            if ($cache && file_exists($cache) && filemtime($cache) > (time() -  5 * 3600)) {
                 $html = file_get_contents($cache);
             } else {
                 $html = $this->client->get($url)->send()->getBody(true);

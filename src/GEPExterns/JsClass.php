@@ -55,7 +55,7 @@ class JsClass
      */
     public function getMethods()
     {
-        sort($this->methods);
+        asort($this->methods);
         return $this->methods;
     }
 
@@ -64,7 +64,7 @@ class JsClass
      */
     public function getProperties()
     {
-        sort($this->properties);
+        asort($this->properties);
         return $this->properties;
     }
 
@@ -81,7 +81,7 @@ class JsClass
      */
     public function getEnums()
     {
-        sort($this->enums);
+        asort($this->enums);
         return $this->enums;
     }
 
@@ -100,7 +100,7 @@ class JsClass
  */
     public function addProperty(Variable $property)
     {
-        if ('Enum' === substr($property->getType(), -5)) {
+        if ('Enum' === substr($property->getType(), -4)) {
             if (array_key_exists($property->getType(), $this->enums)) {
                 $this->enums[$property->getType()][] = $property->getName();
             } else {
