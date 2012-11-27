@@ -73,7 +73,7 @@ class Parser
      */
     public function parse()
     {
-        if (is_file($this->jsClassCache) && filemtime($this->jsClassCache) > (time() - 3600)) {
+        if (is_file($this->jsClassCache) && filemtime($this->jsClassCache) > (time() - 300)) {
             return unserialize(file_get_contents($this->jsClassCache));
         }
 
