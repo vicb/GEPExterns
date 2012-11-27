@@ -1,7 +1,7 @@
 /**
  * @constructor
 {% if parents[class.name] %}
- * @extends {{ '{' ~ parent[class.name] ~ '}' }}
+ * @extends {{ '{' ~ parents[class.name] ~ '}' }}
 {% endif %}
 */
 {{ class.name }} = function() {};

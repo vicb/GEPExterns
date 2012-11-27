@@ -6,12 +6,12 @@
  */
 
 use GEPExterns\Parser;
+use GEPExterns\ClosureDumper;
 use Goutte\Client;
 
 require 'vendor/autoload.php';
 
 $parser = new Parser(new Client());
-
-$parser->parse();
-
-$parser->dump(__DIR__.'/cache');
+$tree = $parser->parse();
+$dumper = new ClosureDumper($tree);
+$dumper->dump(__DIR__.'/cache');

@@ -35,7 +35,7 @@ class JsClass
     private $name;
 
     /**
-     * @param $name   string The name
+     * @param $name string The name
      */
     public function __construct($name)
     {
@@ -55,6 +55,7 @@ class JsClass
      */
     public function getMethods()
     {
+        sort($this->methods);
         return $this->methods;
     }
 
@@ -63,6 +64,7 @@ class JsClass
      */
     public function getProperties()
     {
+        sort($this->properties);
         return $this->properties;
     }
 
@@ -79,6 +81,7 @@ class JsClass
      */
     public function getEnums()
     {
+        sort($this->enums);
         return $this->enums;
     }
 
@@ -88,7 +91,7 @@ class JsClass
     public function addMethod($method)
     {
         foreach(is_array($method) ? $method : array($method) as $m) {
-            $this->methods[] = $m;
+            $this->methods[$m->getName()] = $m;
         }
     }
 
@@ -97,12 +100,14 @@ class JsClass
  */
     public function addProperty(Variable $property)
     {
-        if ('Enum' === substr($property->getType(), 5)) {
+        if ('Enum' === substr($property->getType(), -5)) {
             if (array_key_exists($property->getType(), $this->enums)) {
                 $this->enums[$property->getType()][] = $property->getName();
             } else {
                 $this->enums[$property->getType()] = array($property->getName());
             }
+        } else {
+            $this->properties[$property->getName()] = $property;
         }
     }
 
@@ -112,8 +117,10 @@ class JsClass
     public function addParent($parent)
     {
         foreach(is_array($parent) ? $parent : array($parent) as $p) {
-            $this->parents[] = preg_replace('/[^a-z0-9_.-]/i', '', $p);
+            $p = preg_replace('/[^a-z0-9_.-]/i', '', $p);
+            if ($p !== $this->name) {
+                $this->parents[] = $p;
+            }
         }
     }
-
 }

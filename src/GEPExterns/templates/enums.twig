@@ -1,9 +1,8 @@
 {% for name, values in class.enums %}
+{% for value in values %}
 /**
- * @enum {number|string}
+ * @type {name}
  */
-{{ name }} = {
-{% foreach value in values %}
-    {{ value }}: ''{{ loop.isLast ? '' : ',' }}
+{{ class.name }}.prototype.{{ value }};
 {% endfor %}
-};
+{% endfor %}

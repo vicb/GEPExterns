@@ -26,12 +26,17 @@ class Parser
     /**
      * @var array The classes
      */
-    private $classes = array();
+    private $jsClasses = array();
 
     /**
      * @var array
      */
     private $parents = array();
+
+    /**
+     * @var Crawler[]
+     */
+    private $crawlerCache = array();
 
     /**
      * @param Client $client The HTTP client
@@ -43,93 +48,52 @@ class Parser
         $this->client = $client;
     }
 
+    /**
+     * Parse the docs
+     */
     public function parse()
     {
-        $this->getClasses();
-        foreach($this->classes as $jsClass) {
+        $this->addClasses();
+        foreach($this->jsClasses as $jsClass) {
             $this->addMethods($jsClass);
             $this->addProperties($jsClass);
             $this->addParents($jsClass);
         }
-        $this->findParents();
+        sort($this->jsClasses);
+        return new Tree($this->jsClasses);
     }
 
-    public function dump($cacheDir)
-    {
-        $loader = new \Twig_Loader_Filesystem(__DIR__.'/templates');
-        $twig = new \Twig_Environment($loader, array(
-            'cache'       => $cacheDir,
-            'auto_reload' => true
-        ));
-        echo $twig->render('externs.twig', array(
-            'classes' => $this->classes,
-            'parents' => $this->parents,
-            'typeMap' => array(
-                'bool'   => 'boolean',
-                'int'    => 'number',
-                'double' => 'number',
-                'float'  => 'number',
-                'void'   => 'undefined',
-                'string' => 'string'
-            )
-        ));
-    }
-
-    private function findParents()
-    {
-        $nbParents = array();
-        $toFind = array();
-
-        foreach ($this->classes as $jsClass) {
-            $count = count($jsClass->getParents());
-            $nbParents[$jsClass->getName()] = 0;
-            if (0 === $count) {
-                $this->parents[$jsClass->getName()] = null;
-            } else {
-                $toFind[] = $jsClass;
-            }
-        }
-
-        foreach ($toFind as $jsClass) {
-            $className = $jsClass->getName();
-            $nbClassParents = isset($nbParents[$className]) ? $nbParents[$className] : 0 ;
-            $parent = null;
-            foreach ($jsClass->getParents() as $className) {
-                if ($nbParents[$className] < $nbClassParents) {
-                    $nbClassParents = $nbParents[$className];
-                    $parent = $className;
-                }
-            }
-            $this->parents[$jsClass->getName()] = $parent;
-        }
-    }
-
-    private function getClasses()
+    /**
+     * Add the classes
+     */
+    private function addClasses()
     {
         $that = $this;
-        $todo = 0;
 
-        $this->client->request('GET', $this->url)
+        $this->getCrawler($this->url, '#doxygen-ref')
             ->filter('a.el')
-            ->each(function($node) use($that, $todo) {
+            ->each(function($node) use($that) {
                 /** @var $node \DomNode */
-                $that->classes[] = new JsClass($node->textContent, $node->attributes->getNamedItem('href')->nodeValue);
+                $that->jsClasses[$node->textContent] = new JsClass($node->textContent, $node->attributes->getNamedItem('href')->nodeValue);
             })
         ;
     }
 
+    /**
+     * Adds the method of the given class.
+     *
+     * @param JsClass $jsClass
+     */
     private function addMethods(JsClass $jsClass)
     {
-        $that = $this;
-
-        $docLink = $this->client->request('GET', $this->url)
+        $docLink = $this->getCrawler($this->url, '#doxygen-ref')
             ->selectLink($jsClass->getName())
-            ->link();
+            ->link()
+        ;
 
-        $this->client
-            ->click($docLink)
-            ->filter('div.contents a.el')
-            ->each(function($node) use($that, $jsClass) {
+        $this->getCrawler($docLink->getUri(), 'div.contents')
+            ->filter('a.el')
+            ->each(function($node) use($jsClass) {
                 if (preg_match('/(?<method>[\w-.]+) \((?<args>.*?)\)/', $node->parentNode->textContent, $info)) {
                     // method & args
                     $arguments = array();
@@ -158,18 +122,21 @@ class Parser
         ;
     }
 
+    /**
+     * Adds the properties of the given class.
+     *
+     * @param JsClass $jsClass
+     */
     private function addProperties(JsClass $jsClass)
     {
-        $that = $this;
-
-        $docLink = $this->client->request('GET', $this->url)
+        $docLink = $this->getCrawler($this->url, '#doxygen-ref')
             ->selectLink($jsClass->getName())
-            ->link();
+            ->link()
+        ;
 
-        $this->client
-            ->click($docLink)
-            ->filter('div.contents td.memItemRight')
-            ->each(function($node) use($that, $jsClass) {
+        $this->getCrawler($docLink->getUri(), 'div.contents')
+            ->filter('td.memItemRight')
+            ->each(function($node) use($jsClass) {
             if (preg_match('/^(?<property>[\w-.]+)$/', $node->textContent, $info)) {
                 $typeCrawler = new Crawler($node->parentNode);
                 if (1 == count($typeCrawler->filter('.memItemLeft'))) {
@@ -181,17 +148,20 @@ class Parser
                     );
                 }
             }
-        })
-        ;
+        });
     }
 
+    /**
+     * Adds the parents for the given class.
+     *
+     * @param JsClass $jsClass
+     */
     private function addParents(JsClass $jsClass)
     {
-        $that = $this;
-
-        $docLink = $this->client->request('GET', $this->url)
+        $docLink = $this->getCrawler($this->url, '#doxygen-ref')
             ->selectLink($jsClass->getName())
-            ->link();
+            ->link()
+        ;
 
         $linkNodes = $this->client
             ->click($docLink)
@@ -201,11 +171,35 @@ class Parser
         if (1 === count($linkNodes)) {
             $this->client
                 ->click($linkNodes->link())
-                ->filter('div.contents td:nth-child(2) a.el')
-                ->each(function($node) use($that, $jsClass) {
+                // see https://github.com/symfony/symfony/issues/6126
+                ->filter('div.contents')
+                ->filter('td:nth-child(2n)')
+                ->each(function($node) use($jsClass) {
                     $jsClass->addParent($node->textContent);
                 })
             ;
         }
+    }
+
+    /**
+     * Returns a crawler for the specified URL. Crawler are locally cached.
+     *
+     * @param string $url
+     * @param string $filter
+     * @return Crawler
+     */
+    private function getCrawler($url, $filter = '')
+    {
+        $key = md5($url . $filter);
+
+        if (!isset($this->crawlerCache[$key])) {
+            $crawler = $this->client->request('GET', $url);
+            if ('' !== $filter) {
+                $crawler->filter($filter);
+            }
+            $this->crawlerCache[$key] = $crawler;
+        }
+
+        return clone $this->crawlerCache[$key];
     }
 }
