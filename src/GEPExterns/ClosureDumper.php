@@ -30,12 +30,13 @@ class ClosureDumper
             'classes' => $this->tree->getClasses(),
             'parents' => $this->tree->getParents(),
             'typeMap' => array(
-                'bool'   => 'boolean',
-                'int'    => 'number',
-                'double' => 'number',
-                'float'  => 'number',
-                'void'   => 'undefined',
-                'string' => 'string'
+                'bool'      => 'boolean',
+                'int'       => 'number',
+                'double'    => 'number',
+                'float'     => 'number',
+                'void'      => 'undefined',
+                'string'    => 'string',
+                'ISupports' => 'Node'
             )
         ));
     }

@@ -1,4 +1,8 @@
 {% for name, values in class.enums %}
+/**
+ * @typedef {(string|number)}
+ */
+{{ name }};
 {% for value in values %}
 /**
  * @type {name}

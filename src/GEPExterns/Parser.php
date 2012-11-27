@@ -8,7 +8,7 @@
 namespace GEPExterns;
 
 use Symfony\Component\DomCrawler\Crawler;
-use Goutte\Client;
+use Guzzle\Http\ClientInterface;
 
 
 class Parser
@@ -19,7 +19,7 @@ class Parser
     private $url;
 
     /**
-     * @var Client
+     * @var ClientInterface
      */
     private $client;
 
@@ -39,13 +39,24 @@ class Parser
     private $crawlerCache = array();
 
     /**
-     * @param Client $client The HTTP client
-     * @param string $url    The base url
+     * @var string|null
      */
-    public function __construct(Client $client, $url = "https://developers.google.com/earth/documentation/reference/")
+    private $cacheFolder;
+
+    /**
+     * @param ClientInterface $client      The HTTP client
+     * @param string|null     $cacheFolder The cache folder
+     * @param string          $url         The base url
+     */
+    public function __construct(ClientInterface $client, $cacheFolder = null, $url = "https://developers.google.com/earth/documentation/reference/")
     {
         $this->url = $url;
         $this->client = $client;
+        $this->cacheFolder = $cacheFolder;
+
+        if (!is_dir($cacheFolder)) {
+            mkdir($cacheFolder, 0777, true);
+        }
     }
 
     /**
@@ -163,14 +174,12 @@ class Parser
             ->link()
         ;
 
-        $linkNodes = $this->client
-            ->click($docLink)
+        $linkNodes = $this->getCrawler($docLink->getUri())
             ->selectLink('List of all members.')
         ;
 
         if (1 === count($linkNodes)) {
-            $this->client
-                ->click($linkNodes->link())
+            $this->getCrawler($linkNodes->link()->getUri())
                 // see https://github.com/symfony/symfony/issues/6126
                 ->filter('div.contents')
                 ->filter('td:nth-child(2n)')
@@ -190,16 +199,26 @@ class Parser
      */
     private function getCrawler($url, $filter = '')
     {
-        $key = md5($url . $filter);
+        $key = md5($url);
+
+        $cache = null === $this->cacheFolder ? null : $this->cacheFolder . '/' . $key . '.html';
 
         if (!isset($this->crawlerCache[$key])) {
-            $crawler = $this->client->request('GET', $url);
+            if ($cache && file_exists($cache) && filemtime($cache) < (time() - 3600)) {
+                $html = file_get_contents($cache);
+            } else {
+                $html = $this->client->get($url)->send()->getBody(true);
+                if ($cache) {
+                    file_put_contents($cache, $html);
+                }
+            }
+            $crawler = new Crawler($html, $url);
             if ('' !== $filter) {
                 $crawler->filter($filter);
             }
-            $this->crawlerCache[$key] = $crawler;
+            $this->crawlerCache[$key.$filter] = $crawler;
         }
 
-        return clone $this->crawlerCache[$key];
+        return clone $this->crawlerCache[$key.$filter];
     }
 }

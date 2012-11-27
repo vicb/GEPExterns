@@ -4,7 +4,7 @@
  * @extends {{ '{' ~ parents[class.name] ~ '}' }}
 {% endif %}
 */
-{{ class.name }} = function() {};
+var {{ class.name }} = function() {};
 {% include 'methods.twig' %}
 {% include 'properties.twig' %}
 {% include 'enums.twig' %}
