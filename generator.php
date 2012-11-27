@@ -11,7 +11,7 @@ use Guzzle\Http\Client;
 
 require 'vendor/autoload.php';
 
-$parser = new Parser(new Client(), __DIR__.'/cache/crawler');
+$parser = new Parser(new Client(), __DIR__.'/cache/parser');
 $tree = $parser->parse();
 $dumper = new ClosureDumper($tree);
 $dumper->dump(__DIR__.'/cache/twig');

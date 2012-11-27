@@ -41,7 +41,12 @@ class Parser
     /**
      * @var string|null
      */
-    private $cacheFolder;
+    private $htmlCacheFolder;
+
+    /**
+     * @var string|null
+     */
+    private $jsClassCache;
 
     /**
      * @param ClientInterface $client      The HTTP client
@@ -52,10 +57,19 @@ class Parser
     {
         $this->url = $url;
         $this->client = $client;
-        $this->cacheFolder = $cacheFolder;
 
-        if (!is_dir($cacheFolder)) {
-            mkdir($cacheFolder, 0777, true);
+        if (null !== $cacheFolder) {
+            $this->htmlCacheFolder = $cacheFolder.'/html';
+            $this->jsClassCache = $cacheFolder.'/classes.php';
+
+            if (!is_dir($this->htmlCacheFolder)) {
+                mkdir($this->htmlCacheFolder, 0777, true);
+            }
+
+            if (!is_dir($this->jsClassCache)) {
+                mkdir($this->jsClassCache, 0777, true);
+            }
+
         }
     }
 
@@ -64,6 +78,10 @@ class Parser
      */
     public function parse()
     {
+        if (is_file($this->jsClassCache) && filemtime($this->jsClassCache) < (time() - 3600)) {
+            return unserialize($this->jsClassCache);
+        }
+
         $this->addClasses();
         foreach($this->jsClasses as $jsClass) {
             $this->addMethods($jsClass);
@@ -71,7 +89,14 @@ class Parser
             $this->addParents($jsClass);
         }
         sort($this->jsClasses);
-        return new Tree($this->jsClasses);
+
+        $tree = new Tree($this->jsClasses);
+
+        if ($this->jsClassCache) {
+            file_put_contents($this->jsClassCache, serialize($tree));
+        }
+
+        return $tree;
     }
 
     /**
@@ -191,7 +216,9 @@ class Parser
     }
 
     /**
-     * Returns a crawler for the specified URL. Crawler are locally cached.
+     * Returns a crawler for the specified URL.
+     *
+     * HTML is cached locally and optionally on the fs.
      *
      * @param string $url
      * @param string $filter
@@ -200,11 +227,10 @@ class Parser
     private function getCrawler($url, $filter = '')
     {
         $key = md5($url);
-
-        $cache = null === $this->cacheFolder ? null : $this->cacheFolder . '/' . $key . '.html';
+        $cache = null === $this->htmlCacheFolder ? null : $this->htmlCacheFolder . '/' . $key . '.html';
 
         if (!isset($this->crawlerCache[$key])) {
-            if ($cache && file_exists($cache) && filemtime($cache) < (time() - 3600)) {
+            if ($cache && file_exists($cache) && filemtime($cache) < (time() -  5 * 3600)) {
                 $html = file_get_contents($cache);
             } else {
                 $html = $this->client->get($url)->send()->getBody(true);
